@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Command & Intelligence Center (Layer 8)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #0b0f19;
+            --secondary: #111827;
+            --accent: #a855f7;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+        body {
+            background: radial-gradient(circle at top, #1e1b4b 0%, #09090b 100%);
+            color: #f4f4f5;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .glow-card {
+            background: rgba(17, 24, 39, 0.7);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(168, 85, 247, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glow-card:hover {
+            border-color: rgba(168, 85, 247, 0.4);
+            box-shadow: 0 12px 48px rgba(168, 85, 247, 0.15);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #c084fc 0%, #6366f1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .node-active {
+            border-left: 4px solid #10b981;
+        }
+        .node-authority {
+            border-left: 4px solid #a855f7;
+        }
+        .console-log {
+            font-family: 'Courier New', Courier, monospace;
+            background: #09090b;
+            color: #22c55e;
+            padding: 12px;
+            border-radius: 8px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 11px;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- HEADER -->
+        <header class="flex justify-between items-center mb-8 flex-wrap gap-4 glow-card p-6">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight">
+                    <span class="gradient-text"><i class="fas fa-globe-americas mr-2"></i>Global Command & Intelligence Center</span>
+                    <span class="text-xs font-semibold px-2.5 py-0.5 rounded bg-purple-900/50 text-purple-300 ml-2">Layer 8 Active</span>
+                </h1>
+                <p class="text-sm text-zinc-400 mt-1">Federated AI Learning, Global Trust Fabric & Autonomous Infrastructure Optimization</p>
+            </div>
+            
+            <div class="flex items-center gap-4 flex-wrap">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-zinc-400">Simulate Identity:</span>
+                    <select id="role-selector" onchange="switchIdentity()" class="bg-zinc-950 border border-zinc-800 text-sm rounded-lg p-2 focus:ring-purple-500 focus:border-purple-500 text-zinc-300">
+                        <option value="">Guest (ReadOnly)</option>
+                        <option value="dr_swati">Dr. Swati (Doctor)</option>
+                        <option value="nurse_rohan">Nurse Rohan (Nurse)</option>
+                        <option value="admin_system">Admin System (Admin)</option>
+                        <option value="researcher_bob">Researcher Bob (Researcher)</option>
+                    </select>
+                </div>
+                
+                <div id="role-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-zinc-800 text-zinc-400">GUEST</div>
+                
+                <div class="flex gap-2">
+                    <a href="/" class="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm font-semibold hover:bg-zinc-800 transition flex items-center gap-2">
+                        <i class="fas fa-hospital"></i> Hospital View
+                    </a>
+                    <button onclick="refreshDashboardData()" class="p-2.5 bg-purple-600 rounded-lg hover:bg-purple-700 text-white transition flex items-center">
+                        <i class="fas fa-sync-alt" id="sync-icon"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ALERTS AREA -->
+        <div id="alert-banner" class="hidden mb-6 p-4 rounded-lg bg-red-950/40 border border-red-500/30 text-red-200 flex items-center justify-between">
+            <span id="alert-text"></span>
+            <button onclick="document.getElementById('alert-banner').classList.add('hidden')" class="text-red-400 hover:text-red-300"><i class="fas fa-times"></i></button>
+        </div>
+
+        <!-- MAIN LAYOUT -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            
+            <!-- COLUMN 1: ECOSYSTEM NODES & POLICY ENGINE -->
+            <div class="lg:col-span-1 flex flex-col gap-6">
+                <!-- Federated Nodes -->
+                <div class="glow-card p-6">
+                    <h2 class="text-xl font-bold mb-4 flex items-center justify-between">
+                        <span><i class="fas fa-network-wired text-purple-400 mr-2"></i>Federated Institutions</span>
+                        <span class="text-xs text-zinc-400" id="nodes-count">4 Registered</span>
+                    </h2>
+                    
+                    <div id="nodes-container" class="flex flex-col gap-3">
+                        <!-- Dynamic Node List -->
+                    </div>
+                </div>
+
+                <!-- Policy Engine -->
+                <div class="glow-card p-6">
+                    <h2 class="text-xl font-bold mb-4"><i class="fas fa-sliders-h text-indigo-400 mr-2"></i>Adaptive Policy Engine</h2>
+                    <div class="mb-4">
+                        <div class="flex justify-between text-xs text-zinc-400 mb-1">
+                            <span>Global Threat Index</span>
+                            <span id="threat-index-val" class="font-bold text-zinc-200">0.0%</span>
+                        </div>
+                        <div class="w-full bg-zinc-950 rounded-full h-2">
+                            <div id="threat-index-bar" class="bg-gradient-to-r from-indigo-500 to-purple-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="p-3 bg-zinc-950/60 rounded-lg text-xs border border-zinc-900">
+                        <div class="flex justify-between mb-1">
+                            <span class="text-zinc-400">Zero-Trust Sensitivity:</span>
+                            <span id="sensitivity-status" class="font-semibold text-green-400">STANDARD</span>
+                        </div>
+                        <p class="text-zinc-500 leading-relaxed">As the global threat index escalates, local anomaly thresholds dynamically decrease, automatically tightening access rules across all hospital telemetry points.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUMN 2: FEDERATED AI MACHINE LEARNING -->
+            <div class="lg:col-span-2 glow-card p-6 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold"><i class="fas fa-brain text-purple-400 mr-2"></i>Federated Machine Learning (FedAvg)</h2>
+                        <span class="text-xs px-2.5 py-0.5 bg-zinc-900 border border-zinc-800 text-zinc-400 rounded-full">Logistic Anomalies Model</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="p-4 bg-zinc-950/50 border border-zinc-900 rounded-xl">
+                            <div class="text-xs text-zinc-400 mb-1">Global Validation Loss</div>
+                            <div class="text-2xl font-bold text-purple-300" id="global-loss">N/A</div>
+                        </div>
+                        <div class="p-4 bg-zinc-950/50 border border-zinc-900 rounded-xl">
+                            <div class="text-xs text-zinc-400 mb-1">Current Training Round</div>
+                            <div class="text-2xl font-bold text-indigo-300" id="training-round">Round 0</div>
+                        </div>
+                        <div class="p-4 bg-zinc-950/50 border border-zinc-900 rounded-xl">
+                            <div class="text-xs text-zinc-400 mb-1">Aggregated Parameters</div>
+                            <div class="text-xs font-mono text-zinc-400 truncate mt-2" id="global-weights">weights matrix loaded</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <canvas id="lossChart" style="max-height: 180px;"></canvas>
+                    </div>
+                </div>
+
+                <div class="border-t border-zinc-900 pt-4 flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <div>
+                            <label class="text-xs text-zinc-400 block mb-1">Local Epochs</label>
+                            <input type="number" id="train-epochs" value="5" min="1" max="50" class="w-16 bg-zinc-950 border border-zinc-800 text-zinc-300 rounded p-1 text-center text-sm">
+                        </div>
+                        <div>
+                            <label class="text-xs text-zinc-400 block mb-1">Learning Rate</label>
+                            <select id="train-lr" class="bg-zinc-950 border border-zinc-800 text-zinc-300 rounded p-1 text-sm">
+                                <option value="0.01">0.01 (Fast)</option>
+                                <option value="0.001" selected>0.001 (Recommended)</option>
+                                <option value="0.0001">0.0001 (Fine)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="triggerFederatedTraining()" class="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg font-semibold text-sm shadow-lg shadow-purple-900/20 flex items-center gap-2 transition">
+                        <i class="fas fa-sync-alt animate-spin hidden" id="train-spinner"></i> Run Federated Convergence
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            
+            <!-- POA CONSENSUS VISUALIZER -->
+            <div class="glow-card p-6 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xl font-bold mb-2 flex items-center justify-between">
+                        <span><i class="fas fa-fingerprint text-emerald-400 mr-2"></i>Proof of Authority (PoA) Consensus</span>
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-950/40 text-emerald-400">Consensus Fabric</span>
+                    </h2>
+                    <p class="text-zinc-400 text-xs mb-4">Propose new telemetry records. Validator authorities sign the block if physiology metrics are compliant with medical threshold bounds.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="p-4 bg-zinc-950/60 rounded-xl border border-zinc-900 flex flex-col gap-3">
+                            <h3 class="text-xs font-bold text-zinc-400 uppercase tracking-wide">Propose Telemetry</h3>
+                            <div>
+                                <label class="text-xs text-zinc-500 block mb-1">Heart Rate (bpm)</label>
+                                <input type="number" id="poa-hr" value="78" class="w-full bg-zinc-900 border border-zinc-800 text-zinc-300 rounded p-1 text-sm">
+                            </div>
+                            <div>
+                                <label class="text-xs text-zinc-500 block mb-1">Temperature (°C)</label>
+                                <input type="number" id="poa-temp" value="37.0" step="0.1" class="w-full bg-zinc-900 border border-zinc-800 text-zinc-300 rounded p-1 text-sm">
+                            </div>
+                            <button onclick="proposeConsensusBlock()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold transition">Propose Block Update</button>
+                        </div>
+
+                        <div class="p-4 bg-zinc-950/60 rounded-xl border border-zinc-900 flex flex-col justify-between">
+                            <h3 class="text-xs font-bold text-zinc-400 uppercase tracking-wide mb-2">Quorum Verification Status</h3>
+                            <div class="flex flex-col gap-2" id="validators-status-list">
+                                <div class="flex justify-between text-xs items-center p-1 bg-zinc-900/50 rounded">
+                                    <span class="text-zinc-400">Hospital Alpha (Auth)</span>
+                                    <span class="text-zinc-500 font-mono">Idle</span>
+                                </div>
+                                <div class="flex justify-between text-xs items-center p-1 bg-zinc-900/50 rounded">
+                                    <span class="text-zinc-400">Diagnostic Beta (Auth)</span>
+                                    <span class="text-zinc-500 font-mono">Idle</span>
+                                </div>
+                                <div class="flex justify-between text-xs items-center p-1 bg-zinc-900/50 rounded">
+                                    <span class="text-zinc-400">Research Gamma (Auth)</span>
+                                    <span class="text-zinc-500 font-mono">Idle</span>
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-2 border-t border-zinc-900 flex justify-between items-center text-xs">
+                                <span>Consensus State:</span>
+                                <span id="poa-result-badge" class="px-2 py-0.5 rounded bg-zinc-900 text-zinc-500 font-bold uppercase">Awaiting Proposal</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="console-log mt-2" id="poa-console-log">PoA node initialized. Awaiting block proposal...</div>
+            </div>
+
+            <!-- PRIVACY PRESERVING COMPUTATION -->
+            <div class="glow-card p-6 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xl font-bold mb-4"><i class="fas fa-user-secret text-purple-400 mr-2"></i>Privacy-Preserving Computations</h2>
+                    
+                    <!-- DP -->
+                    <div class="mb-6 p-4 bg-zinc-950/40 rounded-xl border border-zinc-900">
+                        <h3 class="text-xs font-bold text-zinc-400 uppercase tracking-wide mb-3"><i class="fas fa-calculator mr-1"></i>Differential Privacy (Laplacian Noise)</h3>
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="w-1/2">
+                                <label class="text-xs text-zinc-500 block mb-1">Epsilon (&epsilon;) Sensitivity Slider</label>
+                                <input type="range" id="dp-epsilon" min="0.1" max="5.0" step="0.1" value="1.0" oninput="document.getElementById('epsilon-val').innerText = this.value; queryDifferentialPrivacy()" class="w-full accent-purple-500">
+                                <span class="text-xs text-purple-300">Privacy Parameter: <b id="epsilon-val">1.0</b></span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-zinc-400">True Mean: <span id="true-mean-val" class="font-bold text-zinc-200">-</span></div>
+                                <div class="text-xs text-zinc-400 mt-1">DP Anonymized Mean: <span id="dp-mean-val" class="font-bold text-purple-300">-</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- HE -->
+                    <div class="p-4 bg-zinc-950/40 rounded-xl border border-zinc-900">
+                        <h3 class="text-xs font-bold text-zinc-400 uppercase tracking-wide mb-3"><i class="fas fa-key mr-1"></i>Paillier Additive Homomorphic Encryption</h3>
+                        <div class="flex gap-2 mb-3">
+                            <input type="text" id="he-values" value="70, 75, 82, 68, 74" class="flex-grow bg-zinc-900 border border-zinc-800 text-zinc-300 rounded p-1 text-xs text-center">
+                            <button onclick="queryHomomorphicEncryption()" class="px-4 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs font-semibold transition">Compute Sum</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 text-xs">
+                            <div class="p-2 bg-zinc-900/60 rounded">
+                                <span class="text-zinc-500 block mb-1">Homomorphic Ciphertext multiplication:</span>
+                                <span id="he-encrypted-sum" class="font-mono text-indigo-400 font-bold truncate block">-</span>
+                            </div>
+                            <div class="p-2 bg-zinc-900/60 rounded">
+                                <span class="text-zinc-500 block mb-1">Decrypted Decoded Sum Output:</span>
+                                <span id="he-decrypted-sum" class="font-bold text-green-400 text-sm block">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- GLOBAL THREAT TICKER -->
+            <div class="lg:col-span-1 glow-card p-6 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xl font-bold mb-4 flex justify-between items-center">
+                        <span><i class="fas fa-biohazard text-red-400 mr-2"></i>Global Threat Indicators</span>
+                        <button onclick="openThreatReportModal()" class="px-2.5 py-1 bg-red-950/40 border border-red-500/30 text-red-400 hover:bg-red-900/30 text-xs rounded font-bold transition">Report Attack</button>
+                    </h2>
+                    
+                    <div id="threat-list" class="flex flex-col gap-3 max-h-[220px] overflow-y-auto">
+                        <!-- Dynamic threat items -->
+                        <div class="text-xs text-zinc-500 text-center py-8">No threats registered in the global ledger.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GLOBAL DIGITAL TWIN & AUTO-REPAIR -->
+            <div class="lg:col-span-2 glow-card p-6">
+                <h2 class="text-xl font-bold mb-4 flex justify-between items-center">
+                    <span><i class="fas fa-network-wired text-indigo-400 mr-2"></i>Global Infrastructure Digital Twin</span>
+                    <button onclick="triggerDigitalTwinTick()" class="px-3 py-1 bg-indigo-950/40 border border-indigo-500/30 text-indigo-400 hover:bg-indigo-900/30 text-xs rounded font-bold transition">Simulate Tick</button>
+                </h2>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-center">
+                    <div class="p-3 bg-zinc-950/60 rounded-xl border border-zinc-900">
+                        <span class="text-zinc-500 text-xs block mb-1">Routing Latency</span>
+                        <span id="dt-latency" class="text-lg font-bold text-indigo-300">12.0 ms</span>
+                    </div>
+                    <div class="p-3 bg-zinc-950/60 rounded-xl border border-zinc-900">
+                        <span class="text-zinc-500 text-xs block mb-1">Processing Rate</span>
+                        <span id="dt-tps" class="text-lg font-bold text-purple-300">120.0 tps</span>
+                    </div>
+                    <div class="p-3 bg-zinc-950/60 rounded-xl border border-zinc-900">
+                        <span class="text-zinc-500 text-xs block mb-1">CPU Load</span>
+                        <span id="dt-cpu" class="text-lg font-bold text-zinc-300">34.0%</span>
+                    </div>
+                    <div class="p-3 bg-zinc-950/60 rounded-xl border border-zinc-900">
+                        <span class="text-zinc-500 text-xs block mb-1">K8s Active Pods</span>
+                        <span id="dt-pods" class="text-lg font-bold text-green-400">3 Replicas</span>
+                    </div>
+                </div>
+                
+                <div class="p-3 bg-zinc-950/60 rounded-lg text-xs border border-zinc-900 flex justify-between items-center">
+                    <div>
+                        <span class="text-zinc-400 font-semibold">Autoscaler Status:</span>
+                        <span id="dt-autoscaler" class="text-zinc-300 ml-2 font-mono">Steady State</span>
+                    </div>
+                    <span class="px-2 py-0.5 rounded bg-zinc-900 text-zinc-500 text-[10px] font-bold">Auto-Healing Events: <b id="dt-heal-count" class="text-zinc-300">0</b></span>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- REPORT THREAT MODAL -->
+    <div id="threat-modal" class="hidden fixed inset-0 bg-black/80 backdrop-filter backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-zinc-950 border border-zinc-800 rounded-2xl w-full max-w-md p-6 relative">
+            <button onclick="closeThreatReportModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-zinc-300"><i class="fas fa-times"></i></button>
+            
+            <h3 class="text-xl font-bold mb-4 text-red-400"><i class="fas fa-bullhorn mr-2"></i>Report Global Attack Signature</h3>
+            
+            <div class="flex flex-col gap-4">
+                <div>
+                    <label class="text-xs text-zinc-400 block mb-1">Reporting Institution</label>
+                    <select id="threat-reporter" class="w-full bg-zinc-900 border border-zinc-800 text-zinc-300 rounded p-2 text-sm">
+                        <option value="Hospital Alpha">Hospital Alpha</option>
+                        <option value="Diagnostic Beta">Diagnostic Beta</option>
+                        <option value="Research Gamma">Research Gamma</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs text-zinc-400 block mb-1">Threat Title / Classification</label>
+                    <input type="text" id="threat-title" value="ECG Telemetry Replay Attack" class="w-full bg-zinc-900 border border-zinc-800 text-zinc-300 rounded p-2 text-sm">
+                </div>
+                <div>
+                    <label class="text-xs text-zinc-400 block mb-1">Description / Signature details</label>
+                    <textarea id="threat-desc" rows="2" class="w-full bg-zinc-900 border border-zinc-800 text-zinc-300 rounded p-2 text-xs text-zinc-400">Malicious payload replay signature targeting ECG telemetry streams, injecting artificial cardiac patterns.</textarea>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-xs text-zinc-500 block mb-1">Signature HR (bpm)</label>
+                        <input type="number" id="threat-sig-hr" value="145" class="w-full bg-zinc-900 border border-zinc-800 text-zinc-300 rounded p-2 text-sm text-center">
+                    </div>
+                    <div>
+                        <label class="text-xs text-zinc-500 block mb-1">Signature Temp (°C)</label>
+                        <input type="number" id="threat-sig-temp" value="39.2" step="0.1" class="w-full bg-zinc-900 border border-zinc-800 text-zinc-300 rounded p-2 text-sm text-center">
+                    </div>
+                </div>
+
+                <button onclick="submitThreatReport()" class="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-sm transition">Broadcast Threat Globally</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHARTS & SCRIPTS -->
+    <script>
+        let lossChart = null;
+        let token = "";
+        let role = "";
+        
+        // Setup local storage tokens if available
+        if (localStorage.getItem("token")) {
+            token = localStorage.getItem("token");
+            role = localStorage.getItem("role") || "GUEST";
+            document.getElementById("role-badge").innerText = role.toUpperCase();
+            document.getElementById("role-badge").className = `px-3 py-1 rounded-full text-xs font-bold ${getRoleBadgeClass(role)}`;
+            
+            // Set selector
+            const options = document.getElementById("role-selector").options;
+            for (let i = 0; i < options.length; i++) {
+                if (options[i].value === localStorage.getItem("username")) {
+                    document.getElementById("role-selector").selectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        function getRoleBadgeClass(role) {
+            switch(role.toLowerCase()) {
+                case 'admin': return 'bg-red-950/40 text-red-400 border border-red-500/30';
+                case 'doctor': return 'bg-emerald-950/40 text-emerald-400 border border-emerald-500/30';
+                case 'nurse': return 'bg-sky-950/40 text-sky-400 border border-sky-500/30';
+                case 'researcher': return 'bg-purple-950/40 text-purple-400 border border-purple-500/30';
+                default: return 'bg-zinc-800 text-zinc-400 border border-zinc-700';
+            }
+        }
+
+        async function switchIdentity() {
+            const username = document.getElementById("role-selector").value;
+            if (!username) {
+                // Clear token
+                token = "";
+                role = "GUEST";
+                localStorage.removeItem("token");
+                localStorage.removeItem("role");
+                localStorage.removeItem("username");
+                document.getElementById("role-badge").innerText = "GUEST";
+                document.getElementById("role-badge").className = "px-3 py-1 rounded-full text-xs font-bold bg-zinc-800 text-zinc-400";
+                return;
+            }
+
+            // Retrieve corresponding mock credentials
+            let password = "";
+            if (username === "dr_swati") password = "secure_doc123";
+            else if (username === "nurse_rohan") password = "secure_nurse123";
+            else if (username === "admin_system") password = "secure_admin123";
+            else if (username === "researcher_bob") password = "secure_research123";
+
+            try {
+                const response = await fetch("/api/cloud/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await response.json();
+                if (data.token) {
+                    token = data.token;
+                    role = data.role;
+                    localStorage.setItem("token", token);
+                    localStorage.setItem("role", role);
+                    localStorage.setItem("username", username);
+                    
+                    document.getElementById("role-badge").innerText = role.toUpperCase();
+                    document.getElementById("role-badge").className = `px-3 py-1 rounded-full text-xs font-bold ${getRoleBadgeClass(role)}`;
+                    showBanner(`Authenticated successfully as ${role}`, "green");
+                }
+            } catch(e) {
+                console.error("Login failed: ", e);
+                showBanner("Authentication sequence failed.", "red");
+            }
+        }
+
+        function showBanner(message, type) {
+            const banner = document.getElementById("alert-banner");
+            banner.classList.remove("hidden");
+            document.getElementById("alert-text").innerText = message;
+            if (type === "green") {
+                banner.className = "mb-6 p-4 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-200 flex items-center justify-between";
+            } else {
+                banner.className = "mb-6 p-4 rounded-lg bg-red-950/40 border border-red-500/30 text-red-200 flex items-center justify-between";
+            }
+        }
+
+        async function refreshDashboardData() {
+            document.getElementById("sync-icon").classList.add("animate-spin");
+            try {
+                const response = await fetch("/api/federated/status");
+                const data = await response.json();
+                
+                // 1. Update Nodes UI
+                const container = document.getElementById("nodes-container");
+                container.innerHTML = "";
+                let index = 0;
+                for (const key in data.nodes) {
+                    const node = data.nodes[key];
+                    const nodeDiv = document.createElement("div");
+                    nodeDiv.className = `p-4 bg-zinc-950/40 rounded-xl border border-zinc-900 flex justify-between items-center ${node.is_authority ? 'node-authority' : 'node-active'}`;
+                    nodeDiv.innerHTML = `
+                        <div>
+                            <div class="text-sm font-semibold">${node.name}</div>
+                            <div class="text-[10px] text-zinc-500">${node.is_authority ? 'Authority Validator' : 'Consensus Client'}</div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-400">Sens: ${node.anomaly_threshold}</span>
+                            <div class="text-[10px] text-zinc-500 mt-1">${node.dataset_size} local records</div>
+                        </div>
+                    `;
+                    container.appendChild(nodeDiv);
+                }
+                
+                // 2. Policy Engine
+                const threatIndex = data.policy_threat_index || 0.0;
+                document.getElementById("threat-index-val").innerText = `${threatIndex.toFixed(1)}%`;
+                document.getElementById("threat-index-bar").style.width = `${threatIndex}%`;
+                
+                let sensText = "STANDARD";
+                let sensClass = "text-green-400";
+                if (threatIndex > 60.0) {
+                    sensText = "CRITICAL AUDIT";
+                    sensClass = "text-red-400";
+                } else if (threatIndex > 30.0) {
+                    sensText = "TIGHTENED RE-EVALUATION";
+                    sensClass = "text-amber-400";
+                }
+                document.getElementById("sensitivity-status").innerText = sensText;
+                document.getElementById("sensitivity-status").className = `font-semibold ${sensClass}`;
+
+                // 3. Update Federated ML
+                document.getElementById("global-loss").innerText = data.global_model.latest_loss !== null ? data.global_model.latest_loss : "N/A";
+                document.getElementById("training-round").innerText = `Round ${data.training_history.length}`;
+                
+                const weightsStr = data.global_model.weights.map(w => w.toFixed(4)).join(", ");
+                document.getElementById("global-weights").innerText = `[${weightsStr}] bias=${data.global_model.bias.toFixed(4)}`;
+
+                // Refresh Loss Chart
+                updateLossChart(data.training_history);
+
+                // 4. Update Digital Twin Info
+                document.getElementById("dt-latency").innerText = `${data.digital_twin.routing_latency_ms} ms`;
+                document.getElementById("dt-tps").innerText = `${data.digital_twin.packet_processing_rate_tps} tps`;
+                document.getElementById("dt-cpu").innerText = `${data.digital_twin.cpu_utilization_percent}%`;
+                document.getElementById("dt-pods").innerText = `${data.digital_twin.active_pods} Replicas`;
+                document.getElementById("dt-autoscaler").innerText = data.digital_twin.autoscaler_status;
+                document.getElementById("dt-heal-count").innerText = data.digital_twin.healed_events_count;
+
+                // 5. Update threat list
+                const threatList = document.getElementById("threat-list");
+                threatList.innerHTML = "";
+                if (data.threat_registry.length === 0) {
+                    threatList.innerHTML = `<div class="text-xs text-zinc-500 text-center py-8">No threats registered in the global ledger.</div>`;
+                } else {
+                    data.threat_registry.forEach(threat => {
+                        const threatDiv = document.createElement("div");
+                        threatDiv.className = "p-3 bg-red-950/20 border border-red-500/20 rounded-xl text-xs flex flex-col gap-1";
+                        threatDiv.innerHTML = `
+                            <div class="flex justify-between font-bold text-red-400">
+                                <span>${threat.description}</span>
+                                <span class="font-mono text-[10px]">${threat.threat_id}</span>
+                            </div>
+                            <div class="text-zinc-400">Reported by: <b>${threat.reported_by}</b></div>
+                            <div class="text-[10px] text-zinc-500 font-mono">Sig Signature: HR=${threat.signature.hr}bpm, Temp=${threat.signature.temp}°C</div>
+                        `;
+                        threatList.appendChild(threatDiv);
+                    });
+                }
+
+                // Query DP metrics to populate calculations panel
+                queryDifferentialPrivacy();
+                
+            } catch (e) {
+                console.error("Failed loading dashboard data: ", e);
+            } finally {
+                setTimeout(() => {
+                    document.getElementById("sync-icon").classList.remove("animate-spin");
+                }, 500);
+            }
+        }
+
+        function updateLossChart(history) {
+            const ctx = document.getElementById('lossChart').getContext('2d');
+            const labels = history.map(h => `Round ${h.round}`);
+            const data = history.map(h => h.global_loss);
+            
+            if (lossChart) {
+                lossChart.destroy();
+            }
+
+            lossChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Global Anomaly Loss Metric',
+                        data: data,
+                        borderColor: '#a855f7',
+                        backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#71717a' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#71717a' } }
+                    }
+                }
+            });
+        }
+
+        async function triggerFederatedTraining() {
+            if (!token) {
+                showBanner("Authentication token missing. Select a role above first.", "red");
+                return;
+            }
+            document.getElementById("train-spinner").classList.remove("hidden");
+            const epochs = document.getElementById("train-epochs").value;
+            const lr = document.getElementById("train-lr").value;
+
+            try {
+                const response = await fetch("/api/federated/train", {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ epochs, lr })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showBanner(`Cooperative training round successfully completed! Aggregated Global Loss: ${data.round_details.global_loss}`, "green");
+                    refreshDashboardData();
+                } else {
+                    showBanner(`Training failed: ${data.error}`, "red");
+                }
+            } catch(e) {
+                showBanner("Failed to communicate with federated AI aggregation service.", "red");
+            } finally {
+                document.getElementById("train-spinner").classList.add("hidden");
+            }
+        }
+
+        async function proposeConsensusBlock() {
+            const hr = document.getElementById("poa-hr").value;
+            const temp = document.getElementById("poa-temp").value;
+            const logDiv = document.getElementById("poa-console-log");
+            
+            logDiv.innerText = `[${new Date().toLocaleTimeString()}] Proposing block [HR=${hr}, Temp=${temp}]...`;
+
+            try {
+                const response = await fetch("/api/federated/consensus/verify", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        proposer: "Hospital Alpha",
+                        block_data: {
+                            index: 10,
+                            health_data: { hr: parseFloat(hr), temp: parseFloat(temp), bp: "120/80" },
+                            previous_hash: "genesis_hash_0"
+                        }
+                    })
+                });
+                const data = await response.json();
+                
+                // Update signatures list
+                const authList = document.getElementById("validators-status-list");
+                authList.innerHTML = "";
+                
+                for (const key in data.signatures) {
+                    const sig = data.signatures[key];
+                    const item = document.createElement("div");
+                    item.className = "flex justify-between text-xs items-center p-1 bg-zinc-900/50 rounded";
+                    item.innerHTML = `
+                        <span class="text-zinc-400">${key}</span>
+                        <span class="text-green-400 font-mono font-bold"><i class="fas fa-check-double mr-1"></i>Signed (${sig.slice(0, 8)})</span>
+                    `;
+                    authList.appendChild(item);
+                }
+
+                // If not consensus reached or not signed
+                const authorities = ["Hospital Alpha", "Diagnostic Beta", "Research Gamma"];
+                authorities.forEach(auth => {
+                    if (!data.signatures[auth]) {
+                        const item = document.createElement("div");
+                        item.className = "flex justify-between text-xs items-center p-1 bg-zinc-900/50 rounded";
+                        item.innerHTML = `
+                            <span class="text-zinc-400">${auth}</span>
+                            <span class="text-red-400 font-mono font-bold"><i class="fas fa-ban mr-1"></i>Rejected (Out of limits)</span>
+                        `;
+                        authList.appendChild(item);
+                    }
+                });
+                
+                const badge = document.getElementById("poa-result-badge");
+                badge.innerText = data.status;
+                if (data.consensus_reached) {
+                    badge.className = "px-2 py-0.5 rounded bg-green-900/50 text-green-300 font-bold uppercase";
+                    logDiv.innerText += `\nConsensus REACHED! gathered ${data.signatures_gathered}/${data.required_signatures} authority endorsements. Block finalized!`;
+                } else {
+                    badge.className = "px-2 py-0.5 rounded bg-red-900/50 text-red-300 font-bold uppercase";
+                    logDiv.innerText += `\nConsensus REJECTED! Failed threshold verification checklist. Physiology limits violation suspected.`;
+                }
+            } catch(e) {
+                logDiv.innerText += `\nError verifying block proposal.`;
+            }
+        }
+
+        async function queryDifferentialPrivacy() {
+            const epsilon = document.getElementById("dp-epsilon").value;
+            try {
+                const response = await fetch("/api/federated/privacy/query", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ type: "dp", epsilon })
+                });
+                const data = await response.json();
+                document.getElementById("true-mean-val").innerText = `${data.true_mean} bpm`;
+                document.getElementById("dp-mean-val").innerText = `${data.anonymized_mean} bpm`;
+            } catch(e) {
+                console.error("DP failed: ", e);
+            }
+        }
+
+        async function queryHomomorphicEncryption() {
+            const valStr = document.getElementById("he-values").value;
+            const values = valStr.split(",").map(v => parseInt(v.trim())).filter(v => !isNaN(v));
+            
+            try {
+                const response = await fetch("/api/federated/privacy/query", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ type: "he", values })
+                });
+                const data = await response.json();
+                
+                document.getElementById("he-encrypted-sum").innerText = data.aggregation.encrypted_sum_hex;
+                document.getElementById("he-decrypted-sum").innerText = `${data.aggregation.decrypted_sum} (Plaintext True Sum: ${data.aggregation.true_sum})`;
+            } catch(e) {
+                console.error("HE failed: ", e);
+            }
+        }
+
+        async function triggerDigitalTwinTick() {
+            try {
+                const response = await fetch("/api/federated/digital_twin", { method: "POST" });
+                const data = await response.json();
+                
+                document.getElementById("dt-latency").innerText = `${data.routing_latency_ms} ms`;
+                document.getElementById("dt-tps").innerText = `${data.packet_processing_rate_tps} tps`;
+                document.getElementById("dt-cpu").innerText = `${data.cpu_utilization_percent}%`;
+                document.getElementById("dt-pods").innerText = `${data.active_pods} Replicas`;
+                document.getElementById("dt-autoscaler").innerText = data.autoscaler_status;
+                document.getElementById("dt-heal-count").innerText = data.healed_events_count;
+                
+                // Refresh node sensitive configurations if modified by autoscaler
+                refreshDashboardData();
+            } catch (e) {
+                console.error("Digital Twin update failed: ", e);
+            }
+        }
+
+        function openThreatReportModal() {
+            document.getElementById("threat-modal").classList.remove("hidden");
+        }
+
+        function closeThreatReportModal() {
+            document.getElementById("threat-modal").classList.add("hidden");
+        }
+
+        async function submitThreatReport() {
+            if (!token) {
+                showBanner("Authentication token missing. Select a role above first.", "red");
+                closeThreatReportModal();
+                return;
+            }
+            const reported_by = document.getElementById("threat-reporter").value;
+            const description = document.getElementById("threat-title").value;
+            const detail = document.getElementById("threat-desc").value;
+            const hr = parseInt(document.getElementById("threat-sig-hr").value);
+            const temp = parseFloat(document.getElementById("threat-sig-temp").value);
+
+            try {
+                const response = await fetch("/api/federated/threats", {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        reported_by,
+                        description: `${description} (${detail})`,
+                        signature: { hr, temp }
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showBanner(`Threat reported and propagated! Global policy sensitivity index: ${data.new_policy_sensitivity}%`, "green");
+                    closeThreatReportModal();
+                    refreshDashboardData();
+                } else {
+                    showBanner(`Failed reporting threat: ${data.error}`, "red");
+                }
+            } catch (e) {
+                showBanner("Communication failure with threat sharing service.", "red");
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener("load", () => {
+            refreshDashboardData();
+        });
+    </script>
+</body>
+</html>

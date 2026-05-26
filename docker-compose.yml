@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  mqtt-broker:
+    image: eclipse-mosquitto:latest
+    container_name: iomt-mqtt-broker
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto-data:/mosquitto/data
+      - mosquitto-log:/mosquitto/log
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: iomt-backend
+    ports:
+      - "5001:5001"
+    environment:
+      - FLASK_ENV=production
+      - MQTT_BROKER=mqtt-broker
+      - MQTT_PORT=1883
+      - MQTT_TOPIC=iot/hospital/patients
+    depends_on:
+      - mqtt-broker
+
+  simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile.mqtt
+    container_name: iomt-simulator
+    environment:
+      - MQTT_BROKER=mqtt-broker
+      - MQTT_PORT=1883
+      - MQTT_TOPIC=iot/hospital/patients
+      - SEND_INTERVAL=10
+    depends_on:
+      - mqtt-broker
+      - backend
+
+volumes:
+  mosquitto-data:
+  mosquitto-log:

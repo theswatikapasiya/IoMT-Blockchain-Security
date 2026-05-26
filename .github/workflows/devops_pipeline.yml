@@ -1,0 +1,51 @@
+name: IoMT Healthcare Continuous Integration (CI)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-test:
+    name: Build, Lint & Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-level: '3.10'
+        cache: 'pip'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyjwt cryptography pyyaml
+
+    - name: Code Linting
+      run: |
+        pip install flake8
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings.
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Security Static Scan
+      run: |
+        pip install bandit
+        # Scan code using Bandit for common security issues
+        bandit -r blockchain/ app.py mqtt_send.py -x tests/ --severity-level high
+
+    - name: Run Complete Test Suite
+      run: |
+        python -m unittest discover -s tests -p "test_*.py"
+
+    - name: Validate Container Builds
+      run: |
+        docker build -t iomt-backend:latest -f Dockerfile .
+        docker build -t iomt-mqtt-simulator:latest -f Dockerfile.mqtt .

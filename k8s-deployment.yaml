@@ -1,0 +1,180 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto-config
+data:
+  mosquitto.conf: |
+    listener 1883 0.0.0.0
+    allow_anonymous true
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iomt-mqtt-broker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: iomt-mqtt-broker
+  template:
+    metadata:
+      labels:
+        app: iomt-mqtt-broker
+    spec:
+      containers:
+      - name: mosquitto
+        image: eclipse-mosquitto:latest
+        ports:
+        - containerPort: 1883
+        volumeMounts:
+        - name: config-volume
+          mountPath: /mosquitto/config/mosquitto.conf
+          subPath: mosquitto.conf
+      volumes:
+      - name: config-volume
+        configMap:
+          name: mosquitto-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: iomt-mqtt-broker-service
+spec:
+  ports:
+  - port: 1883
+    targetPort: 1883
+  selector:
+    app: iomt-mqtt-broker
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iomt-healthcare-backend
+  labels:
+    app: iomt-healthcare
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: iomt-healthcare
+  template:
+    metadata:
+      labels:
+        app: iomt-healthcare
+    spec:
+      containers:
+      - name: backend-service
+        image: iomt-healthcare-backend:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5001
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+        livenessProbe:
+          httpGet:
+            path: /api/statistics
+            port: 5001
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/statistics
+            port: 5001
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        env:
+        - name: FLASK_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: iomt-healthcare-config
+              key: FLASK_ENV
+        - name: MQTT_BROKER
+          valueFrom:
+            configMapKeyRef:
+              name: iomt-healthcare-config
+              key: MQTT_BROKER
+        - name: MQTT_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: iomt-healthcare-config
+              key: MQTT_PORT
+        - name: MQTT_TOPIC
+          valueFrom:
+            configMapKeyRef:
+              name: iomt-healthcare-config
+              key: MQTT_TOPIC
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: iomt-healthcare-secret
+              key: JWT_SECRET
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: iomt-healthcare-service
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 5001
+  selector:
+    app: iomt-healthcare
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: iomt-healthcare-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: iomt-healthcare-backend
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: iomt-mqtt-simulator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: iomt-mqtt-simulator
+  template:
+    metadata:
+      labels:
+        app: iomt-mqtt-simulator
+    spec:
+      containers:
+      - name: simulator
+        image: iomt-mqtt-simulator:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: MQTT_BROKER
+          valueFrom:
+            configMapKeyRef:
+              name: iomt-healthcare-config
+              key: MQTT_BROKER
+        - name: MQTT_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: iomt-healthcare-config
+              key: MQTT_PORT
+        - name: MQTT_TOPIC
+          valueFrom:
+            configMapKeyRef:
+              name: iomt-healthcare-config
+              key: MQTT_TOPIC
+        - name: SEND_INTERVAL
+          valueFrom:
+            configMapKeyRef:
+              name: iomt-healthcare-config
+              key: SEND_INTERVAL

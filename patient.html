@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Patient Details</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {background:#0f172a;color:white;font-family:sans-serif;}
+.container{padding:20px;}
+.card{background:#1e293b;padding:20px;border-radius:10px;margin-bottom:20px;}
+canvas{margin-top:20px;}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1 id="name"></h1>
+
+<div class="card">
+<p><b>ID:</b> <span id="id"></span></p>
+<p><b>Age:</b> <span id="age"></span></p>
+</div>
+
+<canvas id="hrChart"></canvas>
+<canvas id="bpChart"></canvas>
+<canvas id="tempChart"></canvas>
+
+</div>
+
+<script>
+
+let id = new URLSearchParams(window.location.search).get("id");
+
+async function load(){
+    let res = await fetch(`http://localhost:5000/patient/${id}`);
+    let p = await res.json();
+
+    document.getElementById("name").innerText = p.name;
+    document.getElementById("id").innerText = p.id;
+    document.getElementById("age").innerText = p.age || "-";
+
+    let history = p.history || [];
+
+    let labels = history.map(h => h.time);
+    let hr = history.map(h => h.hr);
+    let bp = history.map(h => h.bp);
+    let temp = history.map(h => h.temp);
+
+    new Chart(document.getElementById("hrChart"), {
+        type: 'line',
+        data: {labels, datasets: [{label:'HR',data:hr,borderColor:'cyan'}]}
+    });
+
+    new Chart(document.getElementById("bpChart"), {
+        type: 'bar',
+        data: {labels, datasets: [{label:'BP',data:bp,backgroundColor:'orange'}]}
+    });
+
+    new Chart(document.getElementById("tempChart"), {
+        type: 'line',
+        data: {labels, datasets: [{label:'Temp',data:temp,borderColor:'red'}]}
+    });
+}
+
+load();
+
+</script>
+
+</body>
+</html>

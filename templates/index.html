@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoMT Hospital Monitoring System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #1e293b;
+            --accent: #3b82f6;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1a1f36 100%);
+            color: #e2e8f0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        .container-custom {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 12px 48px rgba(59, 130, 246, 0.15);
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            border-radius: 12px;
+            padding: 24px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+        }
+        .stat-card h3 {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #fff;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: bold;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        .patient-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .patient-table thead {
+            background: rgba(59, 130, 246, 0.1);
+            border-bottom: 2px solid rgba(59, 130, 246, 0.2);
+        }
+        .patient-table th {
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #93c5fd;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+        .patient-table tbody tr {
+            border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+            hover {
+                background: rgba(59, 130, 246, 0.05);
+            }
+        }
+        .patient-table tbody tr:hover {
+            background: rgba(59, 130, 246, 0.08);
+        }
+        .patient-table td {
+            padding: 16px;
+            color: #cbd5e1;
+        }
+        .vital-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        .vital-normal {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        .vital-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+        .vital-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+        .vital-edit {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .vital-input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            color: #e2e8f0;
+            padding: 6px 10px;
+            border-radius: 6px;
+            width: 60px;
+            text-align: center;
+        }
+        .vital-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .integrity-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        .integrity-ok {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        .integrity-broken {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+        }
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #86efac;
+        }
+        .grid {
+            display: grid;
+            gap: 20px;
+        }
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+        .grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            gap: 5px;
+        }
+        .role-guest { background: rgba(148, 163, 184, 0.2); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
+        .role-doctor { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .role-nurse { background: rgba(59, 130, 246, 0.2); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .role-admin { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .role-researcher { background: rgba(168, 85, 247, 0.2); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3); }
+    </style>
+</head>
+<body>
+    <div class="container-custom">
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                <i class="fas fa-hospital" style="color: #3b82f6; margin-right: 8px;"></i>
+                Hospital Command Center 
+                <a href="/global_dashboard" class="btn btn-primary" style="margin-left: 15px; font-size: 13px; padding: 6px 12px; height: 32px; background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%); border: none;">
+                    <i class="fas fa-globe"></i> Global Command Center (Layer 8)
+                </a>
+            </h1>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span id="timestamp" style="color: #94a3b8; margin-right: 10px;"></span>
+                <span style="font-size: 13px; color: #94a3b8;">Simulate Role:</span>
+                <select id="user-role-select" class="vital-input" style="width: 160px; text-align: left; padding: 6px; height: 36px;" onchange="loginAsRole()">
+                    <option value="">Guest User</option>
+                    <option value="dr_swati">Dr. Swati (Doctor)</option>
+                    <option value="nurse_rohan">Nurse Rohan (Nurse)</option>
+                    <option value="admin_system">Admin System (Admin)</option>
+                    <option value="researcher_bob">Researcher Bob (Researcher)</option>
+                </select>
+                <div id="role-badge-container"></div>
+                <button class="btn btn-primary" style="height: 36px; padding: 0 12px;" onclick="refreshData()">
+                    <i class="fas fa-sync"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Alerts Container -->
+        <div id="alerts-container"></div>
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-3" style="margin-bottom: 30px;">
+            <div class="stat-card">
+                <h3><i class="fas fa-users"></i> Total Patients</h3>
+                <div class="value" id="stat-patients">0</div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #10b981 0%, #047857 100%);">
+                <h3><i class="fas fa-heart"></i> Avg Heart Rate</h3>
+                <div class="value" id="stat-hr">0 <span style="font-size: 18px;">bpm</span></div>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                <h3><i class="fas fa-temperature-high"></i> Avg Temperature</h3>
+                <div class="value" id="stat-temp">0 <span style="font-size: 18px;">°C</span></div>
+            </div>
+        </div>
+
+        <!-- Blockchain Status -->
+        <div class="card" style="margin-bottom: 30px;">
+            <h2 style="margin-bottom: 16px; font-weight: bold;">
+                <i class="fas fa-shield-alt" style="color: #3b82f6;"></i> Blockchain Integrity Status
+            </h2>
+            <div class="grid grid-3">
+                <div>
+                    <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">System Integrity</div>
+                    <div style="font-size: 24px; font-weight: bold; color: #10b981;">
+                        <span id="integrity-score">100</span>%
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">Total Records</div>
+                    <div style="font-size: 24px; font-weight: bold; color: #3b82f6;">
+                        <span id="total-records">0</span>
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">Tampered Records</div>
+                    <div style="font-size: 24px; font-weight: bold; color: #ef4444;">
+                        <span id="tampered-records">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Command Center & DevOps Health (Layer 7 Step 13) -->
+        <div class="grid grid-2" style="margin-bottom: 30px;">
+            <!-- Infrastructure Observability -->
+            <div class="card">
+                <h2 style="margin-bottom: 16px; font-weight: bold;">
+                    <i class="fas fa-network-wired" style="color: #10b981;"></i> Kubernetes Cluster & DevOps Health
+                </h2>
+                <div style="font-size: 13px; color: #cbd5e1; margin-bottom: 15px;">
+                    Real-time container infrastructure telemetry. Scraped via plain-text <a href="/metrics" target="_blank" class="text-blue-400 underline hover:text-blue-300">Prometheus Exporter</a>.
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 6px;">
+                        <span><i class="fab fa-docker" style="color: #2496ed;"></i> API Pods (K8s replicas)</span>
+                        <span class="vital-badge vital-normal" style="padding: 4px 8px;"><i class="fas fa-check-circle"></i> 3 / 3 Healthy</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 6px;">
+                        <span><i class="fas fa-cubes" style="color: #3b82f6;"></i> Mosquitto MQTT Broker</span>
+                        <span class="vital-badge vital-normal" style="padding: 4px 8px;"><i class="fas fa-check-circle"></i> Online</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 6px;">
+                        <span><i class="fas fa-gauge-high" style="color: #f59e0b;"></i> MQTT Ingestion Throughput</span>
+                        <span id="cc-mqtt-throughput" style="font-weight: bold; color: #f59e0b;">12.4 msg/sec</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 6px;">
+                        <span><i class="fas fa-stopwatch" style="color: #a855f7;"></i> API Gateway Latency (p99)</span>
+                        <span id="cc-api-latency" style="font-weight: bold; color: #a855f7;">15.4 ms</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Security Response & Alert Categories -->
+            <div class="card">
+                <h2 style="margin-bottom: 16px; font-weight: bold;">
+                    <i class="fas fa-shield-halved" style="color: #ef4444;"></i> Security Command & Alerts
+                </h2>
+                <div style="font-size: 13px; color: #cbd5e1; margin-bottom: 15px;">
+                    Active Zero-Trust containment & system warning indicators.
+                </div>
+                <div class="grid grid-2" style="gap: 10px; margin-bottom: 15px;">
+                    <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px;">Isolated Devices</div>
+                        <div style="font-size: 20px; font-weight: bold; color: #ef4444;" id="cc-isolated-devices">0</div>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 11px; color: #94a3b8; margin-bottom: 4px;">System Health Alerts</div>
+                        <div style="font-size: 20px; font-weight: bold; color: #f59e0b;" id="cc-clinical-alerts">0</div>
+                    </div>
+                </div>
+                <!-- Device isolation actions (Admin Only) -->
+                <div style="border-top: 1px solid rgba(59, 130, 246, 0.1); padding-top: 12px;">
+                    <h3 style="font-size: 13px; font-weight: bold; margin-bottom: 8px;">Device Containment Action (Admin Only)</h3>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="isolate-dev-id" placeholder="Device ID (e.g. ECG_1000)" class="vital-input" style="width: 100%; flex-grow: 1; text-align: left; padding: 6px 12px; font-size: 12px; height: 32px;">
+                        <button class="btn btn-danger" style="padding: 0 12px; font-size: 12px; height: 32px; font-weight: bold;" onclick="isolateDevice()">Isolate Device</button>
+                        <button class="btn btn-primary" style="padding: 0 12px; font-size: 12px; height: 32px; font-weight: bold; background: #10b981;" onclick="activateDevice()">Reactivate</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Patients Table -->
+        <div class="card">
+            <h2 style="margin-bottom: 20px; font-weight: bold;">
+                <i class="fas fa-table"></i> Patient Records
+            </h2>
+            <div style="overflow-x: auto;">
+                <table class="patient-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Age</th>
+                            <th>Condition</th>
+                            <th>HR (bpm)</th>
+                            <th>BP</th>
+                            <th>Temp (°C)</th>
+                            <th>Integrity</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patients-tbody">
+                        <tr>
+                            <td colspan="9" style="text-align: center; color: #94a3b8;">
+                                <div class="spinner"></div> Loading patients...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "/api";
+        const REFRESH_INTERVAL = 3000; // 3 seconds
+
+        function showAlert(message, type = 'danger', icon = 'fas fa-exclamation-circle') {
+            const container = document.getElementById('alerts-container');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = `
+                <i class="${icon}"></i>
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()" style="margin-left: auto; background: none; border: none; color: inherit; cursor: pointer; font-size: 20px;">×</button>
+            `;
+            container.appendChild(alert);
+            setTimeout(() => alert.remove(), 5000);
+        }
+
+        function getVitalStatus(hr, bp, temp) {
+            const sys = parseInt(bp.split('/')[0]);
+            const dia = parseInt(bp.split('/')[1]);
+            
+            let status = 'normal';
+            if ((hr < 40 || hr > 180) || (sys < 70 || sys > 180) || (dia < 40 || dia > 120) || (temp < 34 || temp > 42)) {
+                status = 'danger';
+            } else if ((hr < 60 || hr > 120) || (sys < 100 || sys > 140) || (dia < 60 || dia > 90) || (temp < 36.5 || temp > 37.5)) {
+                status = 'warning';
+            }
+            return status;
+        }
+
+        function getVitalBadge(value, status) {
+            return `<span class="vital-badge vital-${status}">${value}</span>`;
+        }
+
+        async function refreshData() {
+            try {
+                const [patientRes, statsRes, registryRes] = await Promise.all([
+                    fetch(`${API_BASE}/patients`),
+                    fetch(`${API_BASE}/statistics`),
+                    fetch(`${API_BASE}/security/registry`)
+                ]);
+
+                const patientData = await patientRes.json();
+                const statsData = await statsRes.json();
+                const registryData = await registryRes.json();
+
+                // Update statistics
+                document.getElementById('stat-patients').textContent = statsData.total_patients || 0;
+                document.getElementById('stat-hr').innerHTML = `${statsData.average_hr || 0} <span style="font-size: 18px;">bpm</span>`;
+                document.getElementById('stat-temp').innerHTML = `${statsData.average_temp || 0} <span style="font-size: 18px;">°C</span>`;
+
+                // Update blockchain status
+                const bcStatus = statsData.blockchain_status || {};
+                document.getElementById('integrity-score').textContent = bcStatus.integrity_score || 100;
+                document.getElementById('total-records').textContent = bcStatus.total_blockchains || 0;
+                document.getElementById('tampered-records').textContent = bcStatus.tampered_records || 0;
+
+                // Update Command Center metrics
+                let isolatedCount = 0;
+                for (const devId in registryData) {
+                    if (registryData[devId].status === 'Isolated') {
+                        isolatedCount++;
+                    }
+                }
+                document.getElementById('cc-isolated-devices').textContent = isolatedCount;
+                
+                // Count patients under clinical alert flags or critical conditions
+                let clinicalAlertCount = patientData.patients.filter(p => p.validation_status === 'FLAG' || p.condition === 'Critical').length;
+                document.getElementById('cc-clinical-alerts').textContent = clinicalAlertCount;
+                
+                // Add minor random fluctuation to simulated throughput & latency
+                document.getElementById('cc-mqtt-throughput').textContent = `${(10 + Math.random() * 5).toFixed(1)} msg/sec`;
+                document.getElementById('cc-api-latency').textContent = `${(12 + Math.random() * 8).toFixed(1)} ms`;
+
+                // Update table
+                const tbody = document.getElementById('patients-tbody');
+                tbody.innerHTML = '';
+
+                for (const patient of patientData.patients) {
+                    const status = getVitalStatus(patient.hr, patient.bp, patient.temp);
+                    const row = document.createElement('tr');
+                    
+                    const integrityStatus = patient.tampered ? 'broken' : 'ok';
+                    const integrityIcon = patient.tampered ? 'fas fa-exclamation-triangle' : 'fas fa-check-circle';
+                    
+                    row.innerHTML = `
+                        <td><strong>${patient.id}</strong></td>
+                        <td>${patient.name}</td>
+                        <td>${patient.age}</td>
+                        <td>${patient.condition}</td>
+                        <td>${getVitalBadge(patient.hr, status)}</td>
+                        <td>${getVitalBadge(patient.bp, status)}</td>
+                        <td>${getVitalBadge(patient.temp.toFixed(1), status)}</td>
+                        <td><span class="integrity-indicator integrity-${integrityStatus}"><i class="${integrityIcon}"></i> ${integrityStatus.toUpperCase()}</span></td>
+                        <td>
+                            <button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="viewPatient('${patient.id}')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                }
+
+                document.getElementById('timestamp').textContent = new Date().toLocaleTimeString();
+            } catch (error) {
+                console.error('Error refreshing data:', error);
+                showAlert('Error loading patient data', 'danger');
+            }
+        }
+
+        function viewPatient(patientId) {
+            window.location.href = `/patient/${patientId}`;
+        }
+
+        // Layer 7 functions
+        function updateUIForRole() {
+            const role = localStorage.getItem('role') || 'Guest User';
+            const username = localStorage.getItem('username') || '';
+            const badgeContainer = document.getElementById('role-badge-container');
+            
+            let roleClass = 'role-guest';
+            let roleName = 'Guest';
+            if (role === 'Doctor') { roleClass = 'role-doctor'; roleName = 'Doctor'; }
+            else if (role === 'Nurse') { roleClass = 'role-nurse'; roleName = 'Nurse'; }
+            else if (role === 'Admin') { roleClass = 'role-admin'; roleName = 'Admin'; }
+            else if (role === 'Researcher') { roleClass = 'role-researcher'; roleName = 'Researcher'; }
+            
+            if (badgeContainer) {
+                badgeContainer.innerHTML = `<span class="role-badge ${roleClass}"><i class="fas fa-user-shield"></i> ${roleName} ${username ? `(${username})` : ''}</span>`;
+            }
+            
+            const containmentInputs = [
+                document.getElementById('isolate-dev-id'),
+                document.querySelector('button[onclick="isolateDevice()"]'),
+                document.querySelector('button[onclick="activateDevice()"]')
+            ];
+            
+            let warningText = document.getElementById('admin-warning-text');
+            if (!warningText) {
+                const container = document.getElementById('isolate-dev-id')?.parentElement?.parentElement;
+                if (container) {
+                    warningText = document.createElement('div');
+                    warningText.id = 'admin-warning-text';
+                    warningText.style.fontSize = '11px';
+                    warningText.style.marginTop = '6px';
+                    container.appendChild(warningText);
+                }
+            }
+            
+            if (role === 'Admin') {
+                containmentInputs.forEach(el => { if (el) el.removeAttribute('disabled'); });
+                if (warningText) {
+                    warningText.innerHTML = `<span style="color: #10b981;"><i class="fas fa-unlock"></i> Administrative access granted.</span>`;
+                }
+            } else {
+                containmentInputs.forEach(el => { if (el) el.setAttribute('disabled', 'true'); });
+                if (warningText) {
+                    warningText.innerHTML = `<span style="color: #ef4444;"><i class="fas fa-lock"></i> Requires Admin system role.</span>`;
+                }
+            }
+        }
+
+        async function loginAsRole() {
+            const roleSelect = document.getElementById('user-role-select');
+            const username = roleSelect.value;
+            if (!username) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('role');
+                localStorage.removeItem('username');
+                showAlert('Logged out successfully', 'success', 'fas fa-check-circle');
+                updateUIForRole();
+                return;
+            }
+            
+            const passwords = {
+                "dr_swati": "secure_doc123",
+                "nurse_rohan": "secure_nurse123",
+                "admin_system": "secure_admin123",
+                "researcher_bob": "secure_research123"
+            };
+            
+            try {
+                const response = await fetch('/api/cloud/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: username,
+                        password: passwords[username]
+                    })
+                });
+                const result = await response.json();
+                if (result.token) {
+                    localStorage.setItem('token', result.token);
+                    localStorage.setItem('role', result.role);
+                    localStorage.setItem('username', username);
+                    showAlert(`Logged in successfully as ${result.role}`, 'success', 'fas fa-check-circle');
+                    updateUIForRole();
+                } else {
+                    showAlert('Authentication failed: ' + result.error, 'danger');
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('Authentication failed', 'danger');
+            }
+        }
+
+        async function isolateDevice() {
+            const devId = document.getElementById('isolate-dev-id').value.trim();
+            if (!devId) {
+                showAlert('Please enter a Device ID', 'warning');
+                return;
+            }
+            
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showAlert('Unauthorized: Please log in as Admin system first.', 'danger');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/security/device/isolate', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        device_id: devId,
+                        reason: 'Manual operator containment action'
+                    })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showAlert(`Device ${devId} isolated successfully. Telemetry blocked.`, 'success', 'fas fa-shield-halved');
+                    refreshData();
+                } else {
+                    showAlert('Failed to isolate device: ' + (result.error || 'Check privileges'), 'danger');
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('Error sending isolation request', 'danger');
+            }
+        }
+
+        async function activateDevice() {
+            const devId = document.getElementById('isolate-dev-id').value.trim();
+            if (!devId) {
+                showAlert('Please enter a Device ID', 'warning');
+                return;
+            }
+            
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showAlert('Unauthorized: Please log in as Admin system first.', 'danger');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/security/device/activate', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        device_id: devId
+                     })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showAlert(`Device ${devId} restored successfully to Active status.`, 'success', 'fas fa-check-circle');
+                    refreshData();
+                } else {
+                    showAlert('Failed to activate device: ' + (result.error || 'Check privileges'), 'danger');
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('Error sending activation request', 'danger');
+            }
+        }
+
+        // Set simulated role select value from storage on load
+        window.addEventListener('load', () => {
+            const username = localStorage.getItem('username');
+            if (username) {
+                document.getElementById('user-role-select').value = username;
+            }
+            updateUIForRole();
+        });
+
+        // Auto-refresh
+        refreshData();
+        setInterval(refreshData, REFRESH_INTERVAL);
+    </script>
+</body>
+</html>

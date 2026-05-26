@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Details - IoMT System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #0f172a;
+            --secondary: #1e293b;
+            --accent: #3b82f6;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1a1f36 100%);
+            color: #e2e8f0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .container-custom {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: bold;
+            color: #fff;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        .btn-secondary {
+            background: #64748b;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #475569;
+        }
+        .patient-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .info-item {
+            background: rgba(59, 130, 246, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #3b82f6;
+        }
+        .info-label {
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        .info-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+        }
+        .chart-container {
+            position: relative;
+            height: 350px;
+            margin-bottom: 30px;
+        }
+        .blockchain-view {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 12px;
+            overflow-x: auto;
+        }
+        .block {
+            display: inline-flex;
+            flex-direction: column;
+            padding: 15px;
+            border-radius: 8px;
+            min-width: 210px;
+            font-size: 12px;
+            color: #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        .block-healthy {
+            border: 2px solid #10b981;
+            background: rgba(16, 185, 129, 0.05);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+        }
+        .block-tampered {
+            border: 2px solid #ef4444 !important;
+            background: rgba(239, 68, 68, 0.1) !important;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+        }
+        .block-header {
+            font-weight: bold;
+            color: #93c5fd;
+            margin-bottom: 8px;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+            padding-bottom: 8px;
+        }
+        .block-arrow {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 10px;
+            font-size: 18px;
+            color: #10b981;
+            flex-shrink: 0;
+        }
+        .block-arrow-broken {
+            color: #ef4444;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.1); }
+        }
+        .block-data {
+            margin-bottom: 8px;
+        }
+        .block-hash {
+            font-family: monospace;
+            font-size: 10px;
+            color: #64748b;
+            word-break: break-all;
+            margin: 8px 0;
+        }
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+        .grid {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: 1fr 1fr;
+        }
+        @media (max-width: 1024px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            gap: 5px;
+        }
+        .role-guest { background: rgba(148, 163, 184, 0.2); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
+        .role-doctor { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .role-nurse { background: rgba(59, 130, 246, 0.2); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .role-admin { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .role-researcher { background: rgba(168, 85, 247, 0.2); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3); }
+    </style>
+</head>
+<body>
+    <div class="container-custom">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>Patient Details</h1>
+                <p style="color: #94a3b8; margin-top: 5px;">
+                    <i class="fas fa-heartbeat" style="color: #ef4444;"></i> Real-time Monitoring & Blockchain Verification
+                </p>
+                <div id="role-badge-container" style="margin-top: 8px;"></div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" onclick="window.location.href='/'">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </button>
+                <button class="btn btn-primary" onclick="window.location.href='/global_dashboard'" style="background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%); border: none;">
+                    <i class="fas fa-globe"></i> Global Dashboard
+                </button>
+            </div>
+        </div>
+
+        <!-- Alerts Container -->
+        <div id="alerts-container"></div>
+
+        <!-- Patient Info Section -->
+        <div class="card" style="margin-bottom: 30px;">
+            <h2 style="margin-bottom: 20px; font-weight: bold;">
+                <i class="fas fa-user-medical"></i> Patient Profile
+            </h2>
+            <div class="patient-info" id="patient-info"></div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid" style="margin-bottom: 30px;">
+            <div class="card">
+                <h3 style="margin-bottom: 15px; font-weight: bold;">
+                    <i class="fas fa-heartbeat"></i> Heart Rate Trend
+                </h3>
+                <div class="chart-container">
+                    <canvas id="hrChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom: 15px; font-weight: bold;">
+                    <i class="fas fa-temperature-high"></i> Temperature Trend
+                </h3>
+                <div class="chart-container">
+                    <canvas id="tempChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- BP Chart -->
+        <div class="card" style="margin-bottom: 30px;">
+            <h3 style="margin-bottom: 15px; font-weight: bold;">
+                <i class="fas fa-chart-bar"></i> Blood Pressure Trend
+            </h3>
+            <div class="chart-container">
+                <canvas id="bpChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Blockchain Visualization -->
+        <div class="card" style="margin-bottom: 30px;">
+            <h2 style="margin-bottom: 20px; font-weight: bold;">
+                <i class="fas fa-shield-alt" style="color: #3b82f6;"></i> Blockchain Records
+            </h2>
+            <div style="margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between;">
+                <span id="blockchain-integrity" style="font-weight: bold; padding: 8px 16px; border-radius: 8px; display: inline-block;">
+                    <i class="fas fa-check-circle"></i> Integrity: OK
+                </span>
+                <button id="tamper-btn" class="btn btn-danger" style="padding: 8px 16px; font-size: 13px;" onclick="simulateBlockchainTampering()">
+                    <i class="fas fa-exclamation-triangle"></i> Simulate Blockchain Tampering
+                </button>
+            </div>
+            <div class="blockchain-view" id="blockchain-container">
+                <p style="color: #94a3b8; text-align: center;">
+                    <i class="fas fa-spinner fa-spin"></i> Loading blockchain...
+                </p>
+            </div>
+        </div>
+
+        <!-- Tamper History -->
+        <div class="card">
+            <h2 style="margin-bottom: 20px; font-weight: bold;">
+                <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i> Tamper Detection History
+            </h2>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; font-size: 12px;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid rgba(59, 130, 246, 0.2);">
+                            <th style="padding: 12px; text-align: left; color: #93c5fd;">Timestamp</th>
+                            <th style="padding: 12px; text-align: left; color: #93c5fd;">Change Type</th>
+                            <th style="padding: 12px; text-align: left; color: #93c5fd;">Value</th>
+                            <th style="padding: 12px; text-align: left; color: #93c5fd;">Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tamper-history">
+                        <tr>
+                            <td colspan="4" style="padding: 20px; text-align: center; color: #94a3b8;">
+                                No tampering detected
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Layer 7 Grid (Digital Twin, Replay, Knowledge Graph, clinician overrides) -->
+        <div class="grid" style="margin-top: 30px; margin-bottom: 30px;">
+            <!-- Digital Patient Twin Virtual Status -->
+            <div class="card">
+                <h2 style="margin-bottom: 16px; font-weight: bold;">
+                    <i class="fas fa-user-gear" style="color: #60a5fa;"></i> Digital Patient Twin Virtual State
+                </h2>
+                <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span>Deterioration Index:</span>
+                        <span id="twin-deterioration-text" style="font-weight: bold; color: #10b981;">0% (Stable)</span>
+                    </div>
+                    <div style="width: 100%; background: #1e293b; height: 10px; border-radius: 5px; overflow: hidden;">
+                        <div id="twin-deterioration-bar" style="width: 0%; height: 100%; background: #10b981; transition: all 0.5s ease;"></div>
+                    </div>
+                </div>
+
+                <!-- Clinical alerts & decisions (Step 5) -->
+                <div id="clinical-support-card" style="background: rgba(96, 165, 250, 0.05); border: 1px solid rgba(96, 165, 250, 0.2); padding: 16px; border-radius: 8px;">
+                    <h3 style="font-size: 14px; font-weight: bold; margin-bottom: 8px; color: #93c5fd;">
+                        <i class="fas fa-heart-pulse"></i> Clinical Decision Support Feed
+                    </h3>
+                    <div id="clinical-decision-status" style="margin-bottom: 8px; font-weight: bold;">
+                        Loading diagnostic trends...
+                    </div>
+                    <ul id="clinical-recommendations" style="font-size: 11px; padding-left: 15px; list-style-type: disc; color: #cbd5e1; display: flex; flex-direction: column; gap: 4px;">
+                        <!-- List entries -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Forensic Event Replay Controller (Step 11) -->
+            <div class="card">
+                <h2 style="margin-bottom: 16px; font-weight: bold;">
+                    <i class="fas fa-clock-rotate-left" style="color: #a855f7;"></i> Forensic Event Replay System
+                </h2>
+                <p style="font-size: 12px; color: #cbd5e1; margin-bottom: 15px;">
+                    Step-by-step forensic vitals and validation audit replay trace (sliding window buffer: 50 points).
+                </p>
+                <div style="background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button class="btn btn-primary" id="replay-play-btn" style="padding: 6px 12px; font-size: 12px;" onclick="startForensicReplay()">
+                            <i class="fas fa-play"></i> Start Replay
+                        </button>
+                        <button class="btn btn-secondary" id="replay-stop-btn" style="padding: 6px 12px; font-size: 12px; display: none;" onclick="stopForensicReplay()">
+                            <i class="fas fa-pause"></i> Pause
+                        </button>
+                        <span id="replay-status" style="font-size: 11px; color: #94a3b8;">Inactive</span>
+                    </div>
+                    <div style="width: 100%; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 11px;">Timeline:</span>
+                        <input type="range" id="replay-slider" min="0" max="0" value="0" style="width: 100%;" oninput="seekReplayStep(this.value)">
+                    </div>
+                    <!-- Replay display card -->
+                    <div style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 6px; font-size: 12px; font-family: monospace;">
+                        <div><strong>Timestamp:</strong> <span id="rep-time">-</span></div>
+                        <div><strong>Vitals:</strong> <span id="rep-vitals">-</span></div>
+                        <div><strong>Security:</strong> <span id="rep-security">-</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid" style="margin-bottom: 30px;">
+            <!-- Explainable Healthcare Knowledge Graph (Step 10) -->
+            <div class="card">
+                <h2 style="margin-bottom: 16px; font-weight: bold;">
+                    <i class="fas fa-circle-nodes" style="color: #10b981;"></i> Explainable Healthcare Knowledge Graph Map
+                </h2>
+                <div style="font-size: 12px; color: #cbd5e1; margin-bottom: 15px;">
+                    Inter-service topological relationships mapping patient, active sensors, anomalies, trust score updates, and cryptographic blocks.
+                </div>
+                <div id="kg-graph-canvas" style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; font-family: monospace; font-size: 11px; max-height: 250px; overflow-y: auto; border: 1px solid rgba(59, 130, 246, 0.1); line-height: 1.5;">
+                    <div style="text-align: center; color: #94a3b8;"><i class="fas fa-spinner fa-spin"></i> Constructing knowledge links...</div>
+                </div>
+            </div>
+
+            <!-- Clinician Override Feedback & Research Export -->
+            <div class="card">
+                <h2 style="margin-bottom: 16px; font-weight: bold;">
+                    <i class="fas fa-user-md" style="color: #f59e0b;"></i> Clinician Interventions & Research Export
+                </h2>
+                <!-- Clinician Feedback Form -->
+                <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <h3 style="font-size: 13px; font-weight: bold; margin-bottom: 8px;">Override validation decisions (Doctor/Admin Only)</h3>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; gap: 10px;">
+                            <input type="number" id="override-idx" placeholder="Block Index" class="vital-input" style="width: 100px; text-align: left; font-size: 12px;">
+                            <select id="override-decision" class="vital-input" style="flex-grow: 1; text-align: left; font-size: 12px;">
+                                <option value="ACCEPT">ACCEPT (Override quarantine)</option>
+                                <option value="FLAG">FLAG (Mark suspicious)</option>
+                                <option value="QUARANTINE">QUARANTINE (Isolate telemetry)</option>
+                            </select>
+                        </div>
+                        <textarea id="override-notes" placeholder="Clinician diagnostic notes / rationale..." class="vital-input" style="width: 100%; text-align: left; height: 50px; padding: 6px; font-size: 12px;"></textarea>
+                        <button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="submitClinicianOverride()">Log Override Decision</button>
+                    </div>
+                </div>
+                <!-- Anonymized Research Export -->
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 11px; color: #cbd5e1;">Export identity-masked records for clinical research enablement:</span>
+                    <button class="btn btn-primary" style="background: #10b981; padding: 8px 16px; font-size: 12px;" onclick="exportResearchData()">
+                        <i class="fas fa-file-export"></i> Export Research Stream
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const patientId = window.location.pathname.split('/').pop();
+        const API_BASE = "/api";
+        let charts = {};
+
+        function getPatientId() {
+            return patientId;
+        }
+
+        function showAlert(message, type = 'danger') {
+            const container = document.getElementById('alerts-container');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = `
+                <i class="fas fa-${type === 'danger' ? 'exclamation-circle' : 'check-circle'}"></i>
+                <span>${message}</span>
+            `;
+            container.appendChild(alert);
+            setTimeout(() => alert.remove(), 5000);
+        }
+
+        async function loadPatientData() {
+            try {
+                const [patientRes, twinRes] = await Promise.all([
+                    fetch(`${API_BASE}/patient/${getPatientId()}`),
+                    fetch(`${API_BASE}/patient/${getPatientId()}/twin`)
+                ]);
+                
+                const data = await patientRes.json();
+                const twinData = await twinRes.json();
+
+                if (data.error) {
+                    showAlert('Patient not found', 'danger');
+                    return;
+                }
+
+                const patient = data.patient;
+                const blockchain = data.blockchain;
+                const tampering = data.tampering;
+
+                // Update patient info
+                const infoContainer = document.getElementById('patient-info');
+                infoContainer.innerHTML = `
+                    <div class="info-item">
+                        <div class="info-label">Patient ID</div>
+                        <div class="info-value">${patient.id}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Name</div>
+                        <div class="info-value">${patient.name}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Age</div>
+                        <div class="info-value">${patient.age} years</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Condition</div>
+                        <div class="info-value" style="color: ${patient.condition === 'Critical' ? '#ef4444' : patient.condition === 'Observation' ? '#f59e0b' : '#10b981'};">
+                            ${patient.condition}
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Contact</div>
+                        <div class="info-value">${patient.contact || 'N/A'}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Assigned Doctor</div>
+                        <div class="info-value">${patient.assignedDoctor || 'N/A'}</div>
+                    </div>
+                `;
+
+                // Update deterioration index
+                if (twinData.current_vitals) {
+                    const idx = twinData.current_vitals.deterioration_index || 0;
+                    document.getElementById('twin-deterioration-bar').style.width = `${idx}%`;
+                    const textEl = document.getElementById('twin-deterioration-text');
+                    if (idx > 70) {
+                        textEl.textContent = `${idx}% (Critical deterioration)`;
+                        textEl.style.color = '#ef4444';
+                        document.getElementById('twin-deterioration-bar').style.background = '#ef4444';
+                    } else if (idx > 30) {
+                        textEl.textContent = `${idx}% (Elevated risk)`;
+                        textEl.style.color = '#f59e0b';
+                        document.getElementById('twin-deterioration-bar').style.background = '#f59e0b';
+                    } else {
+                        textEl.textContent = `${idx}% (Stable)`;
+                        textEl.style.color = '#10b981';
+                        document.getElementById('twin-deterioration-bar').style.background = '#10b981';
+                    }
+                }
+                
+                // Update clinical support card
+                if (twinData.clinical_support) {
+                    const status = twinData.clinical_support;
+                    const statusText = document.getElementById('clinical-decision-status');
+                    const recsList = document.getElementById('clinical-recommendations');
+                    
+                    statusText.innerHTML = `Septic Shock Risk: <span style="color: ${status.severity === 'CRITICAL' ? '#ef4444' : status.severity === 'WARNING' ? '#f59e0b' : '#10b981'}; font-size: 16px;">${status.septic_risk_score}%</span> [Severity: ${status.severity}]`;
+                    recsList.innerHTML = status.recommendations.map(r => `<li>${r}</li>`).join('');
+                }
+
+                // Update charts with history data and twin projections
+                updateCharts(data.history || [], patient, twinData.projections);
+
+                // Update blockchain view
+                updateBlockchainView(blockchain, tampering);
+
+                // Update tamper history
+                updateTamperHistory(data.history || []);
+
+                // Load Knowledge Graph
+                loadKnowledgeGraph();
+                
+                // Setup replay logs
+                loadReplayData();
+
+            } catch (error) {
+                console.error('Error loading patient data:', error);
+                showAlert('Error loading patient data', 'danger');
+            }
+        }
+
+        function updateCharts(history, patient, projections = null) {
+            const timestamps = [];
+            const hrHistory = [];
+            const tempHistory = [];
+            const bpSysHistory = [];
+            const bpDiaHistory = [];
+            
+            // Build history
+            if (Array.isArray(history) && history.length > 0) {
+                history.slice(-20).forEach((record, index) => {
+                    timestamps.push(`H-${20 - index}`);
+                    hrHistory.push(record.hr || 0);
+                    tempHistory.push(record.temp || 0);
+                    const [sys, dia] = (record.bp || '120/80').split('/').map(Number);
+                    bpSysHistory.push(sys);
+                    bpDiaHistory.push(dia);
+                });
+            }
+            
+            // Add current
+            timestamps.push('Current');
+            hrHistory.push(patient.hr);
+            tempHistory.push(patient.temp);
+            const [sysCurr, diaCurr] = (patient.bp || '120/80').split('/').map(Number);
+            bpSysHistory.push(sysCurr);
+            bpDiaHistory.push(diaCurr);
+            
+            // Build projection datasets
+            const hrProj = Array(hrHistory.length - 1).fill(null);
+            const tempProj = Array(tempHistory.length - 1).fill(null);
+            const bpSysProj = Array(bpSysHistory.length - 1).fill(null);
+            const bpDiaProj = Array(bpDiaHistory.length - 1).fill(null);
+            
+            // Connect at Current
+            hrProj.push(patient.hr);
+            tempProj.push(patient.temp);
+            bpSysProj.push(sysCurr);
+            bpDiaProj.push(diaCurr);
+            
+            if (projections) {
+                projections.hr.forEach((val, index) => {
+                    timestamps.push(`P+${index + 1}`);
+                    hrProj.push(val);
+                    tempProj.push(projections.temp[index]);
+                    bpSysProj.push(projections.bp_sys[index]);
+                    bpDiaProj.push(projections.bp_dia[index]);
+                    
+                    // History pads nulls
+                    hrHistory.push(null);
+                    tempHistory.push(null);
+                    bpSysHistory.push(null);
+                    bpDiaHistory.push(null);
+                });
+            }
+
+            // Destroy existing charts
+            Object.values(charts).forEach(chart => chart?.destroy?.());
+
+            // HR Chart
+            const hrCtx = document.getElementById('hrChart').getContext('2d');
+            charts.hr = new Chart(hrCtx, {
+                type: 'line',
+                data: {
+                    labels: timestamps,
+                    datasets: [
+                        {
+                            label: 'Historical Heart Rate (bpm)',
+                            data: hrHistory,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#ef4444'
+                        },
+                        {
+                            label: 'Digital Twin Forecast',
+                            data: hrProj,
+                            borderColor: '#fca5a5',
+                            borderDash: [5, 5],
+                            backgroundColor: 'rgba(252, 165, 165, 0.05)',
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#fca5a5'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#cbd5e1' } } },
+                    scales: {
+                        y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(59, 130, 246, 0.1)' } },
+                        x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(59, 130, 246, 0.1)' } }
+                    }
+                }
+            });
+
+            // Temperature Chart
+            const tempCtx = document.getElementById('tempChart').getContext('2d');
+            charts.temp = new Chart(tempCtx, {
+                type: 'line',
+                data: {
+                    labels: timestamps,
+                    datasets: [
+                        {
+                            label: 'Historical Temperature (°C)',
+                            data: tempHistory,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#f59e0b'
+                        },
+                        {
+                            label: 'Digital Twin Forecast',
+                            data: tempProj,
+                            borderColor: '#fde047',
+                            borderDash: [5, 5],
+                            backgroundColor: 'rgba(253, 224, 71, 0.05)',
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#fde047'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#cbd5e1' } } },
+                    scales: {
+                        y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(59, 130, 246, 0.1)' } },
+                        x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(59, 130, 246, 0.1)' } }
+                    }
+                }
+            });
+
+            // BP Chart
+            const bpCtx = document.getElementById('bpChart').getContext('2d');
+            charts.bp = new Chart(bpCtx, {
+                type: 'line',
+                data: {
+                    labels: timestamps,
+                    datasets: [
+                        {
+                            label: 'Systolic History (mmHg)',
+                            data: bpSysHistory,
+                            borderColor: '#3b82f6',
+                            fill: false,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Systolic Forecast',
+                            data: bpSysProj,
+                            borderColor: '#93c5fd',
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Diastolic History (mmHg)',
+                            data: bpDiaHistory,
+                            borderColor: '#10b981',
+                            fill: false,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Diastolic Forecast',
+                            data: bpDiaProj,
+                            borderColor: '#6ee7b7',
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#cbd5e1' } } },
+                    scales: {
+                        y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(59, 130, 246, 0.1)' } },
+                        x: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(59, 130, 246, 0.1)' } }
+                    }
+                }
+            });
+        }
+
+        function updateBlockchainView(blockchain, tampering) {
+            const container = document.getElementById('blockchain-container');
+            if (!blockchain || blockchain.length === 0) {
+                container.innerHTML = '<p style="color: #94a3b8;">No blockchain records</p>';
+                return;
+            }
+
+            const integrityDiv = document.getElementById('blockchain-integrity');
+            const isTampered = tampering?.is_tampered;
+            integrityDiv.innerHTML = isTampered
+                ? '<i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i> Integrity: BROKEN'
+                : '<i class="fas fa-check-circle" style="color: #10b981;"></i> Integrity: OK';
+            integrityDiv.style.color = isTampered ? '#fca5a5' : '#86efac';
+            integrityDiv.style.background = isTampered ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)';
+
+            const tamperedBlocks = tampering?.tampered_blocks || [];
+
+            container.innerHTML = blockchain.slice(-10).map((block, i, arr) => {
+                const isBlockTampered = tamperedBlocks.includes(block.index);
+                const blockClass = isBlockTampered ? 'block-tampered' : 'block-healthy';
+                
+                let blockHtml = `
+                    <div class="block ${blockClass}" style="flex-shrink: 0;">
+                        <div class="block-header flex justify-between items-center" style="display: flex; justify-content: space-between;">
+                            <span>Block #${block.index}</span>
+                            ${block.index === 0 ? '<span style="font-size: 9px; background: rgba(59, 130, 246, 0.2); color: #93c5fd; padding: 2px 4px; border-radius: 4px;">Genesis</span>' : ''}
+                        </div>
+                        <div class="block-data"><strong>HR:</strong> ${block.health_data.hr || 'N/A'} bpm</div>
+                        <div class="block-data"><strong>BP:</strong> ${block.health_data.bp || 'N/A'}</div>
+                        <div class="block-data"><strong>Temp:</strong> ${block.health_data.temp ? block.health_data.temp + '°C' : 'N/A'}</div>
+                        
+                        ${block.index > 0 ? `
+                        <div style="border-top: 1px solid rgba(59, 130, 246, 0.15); margin-top: 6px; padding-top: 6px; font-size: 11px;">
+                            <div><strong>Trust:</strong> <span style="color: #60a5fa; font-weight: bold;">${block.trust_score}%</span></div>
+                            <div><strong>Label:</strong> <span style="color: ${block.label === 'NORMAL' ? '#34d399' : '#f87171'}; font-weight: bold;">${block.label}</span></div>
+                            <div><strong>Decision:</strong> <span style="color: #cbd5e1; font-weight: bold;">${block.validation_status}</span></div>
+                        </div>
+                        ` : ''}
+                        
+                        <div style="border-top: 1px solid rgba(59, 130, 246, 0.2); margin-top: 8px; padding-top: 8px;">
+                            <strong style="color: #64748b; font-size: 10px;">Hash:</strong>
+                            <div class="block-hash">${block.hash.substring(0, 16)}...</div>
+                            <strong style="color: #64748b; font-size: 10px;">Prev Hash:</strong>
+                            <div class="block-hash">${block.previous_hash.substring(0, 16)}...</div>
+                        </div>
+                    </div>
+                `;
+
+                if (i < arr.length - 1) {
+                    const nextBlock = arr[i + 1];
+                    const isNextTampered = tamperedBlocks.includes(nextBlock.index);
+                    const arrowClass = isNextTampered ? 'block-arrow block-arrow-broken' : 'block-arrow';
+                    const arrowIcon = isNextTampered ? 'fa-unlink' : 'fa-arrow-right';
+                    blockHtml += `
+                        <div class="${arrowClass}">
+                            <i class="fas ${arrowIcon}"></i>
+                        </div>
+                    `;
+                }
+
+                return blockHtml;
+            }).join('');
+        }
+
+        async function simulateBlockchainTampering() {
+            try {
+                const response = await fetch(`/api/blockchain/tamper`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        patient_id: getPatientId(),
+                        block_index: 1, // tamper first telemetry block
+                        hr: 150
+                    })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showAlert('🚨 Cryptographic broken chain detected! Alert generated on hospital dashboard & MATLAB notifications sent.', 'danger');
+                    loadPatientData(); // reload
+                } else {
+                    showAlert('Tampering failed: ' + result.error, 'danger');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error simulating blockchain tampering', 'danger');
+            }
+        }
+
+        function updateTamperHistory(history) {
+            const tbody = document.getElementById('tamper-history');
+            if (!history || history.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #94a3b8;">No tampering detected</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = history.slice(-10).map(record => `
+                <tr style="border-bottom: 1px solid rgba(59, 130, 246, 0.1);">
+                    <td style="padding: 12px;">${new Date(record.timestamp).toLocaleString()}</td>
+                    <td style="padding: 12px;">Vital Update</td>
+                    <td style="padding: 12px; font-family: monospace;">HR: ${record.hr || '-'} | BP: ${record.bp || '-'} | Temp: ${record.temp || '-'}</td>
+                    <td style="padding: 12px;"><span style="color: #10b981;">✓ Normal</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // Layer 7 functions
+        async function loadKnowledgeGraph() {
+            try {
+                const response = await fetch(`/api/patient/${getPatientId()}/knowledge_graph`);
+                const data = await response.json();
+                if (data.error) return;
+                
+                const canvas = document.getElementById('kg-graph-canvas');
+                let html = '<strong>Nodes:</strong><br>';
+                data.nodes.forEach(n => {
+                    let icon = 'fa-circle';
+                    let color = '#94a3b8';
+                    if (n.type === 'patient') { icon = 'fa-user-medical'; color = '#3b82f6'; }
+                    else if (n.type === 'device') { icon = 'fa-microchip'; color = '#10b981'; }
+                    else if (n.type === 'blockchain_block') { icon = 'fa-cube'; color = '#a855f7'; }
+                    else if (n.type === 'alert') { icon = 'fa-triangle-exclamation'; color = '#ef4444'; }
+                    
+                    html += `<span style="color: ${color};"><i class="fas ${icon}"></i> ${n.label}</span> (${n.type})<br>`;
+                });
+                
+                html += '<br><strong>Relational Links:</strong><br>';
+                data.links.forEach(l => {
+                    html += `<span>${l.source}</span> ──[<span style="color: #60a5fa; font-weight: bold;">${l.relationship}</span>]──> <span>${l.target}</span><br>`;
+                });
+                
+                canvas.innerHTML = html;
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        let replayData = [];
+        let replayIndex = 0;
+        let replayInterval = null;
+
+        async function loadReplayData() {
+            try {
+                const response = await fetch(`/api/patient/${getPatientId()}/replay`);
+                const data = await response.json();
+                replayData = data.replay_data || [];
+                
+                const slider = document.getElementById('replay-slider');
+                if (replayData.length > 0) {
+                    slider.max = replayData.length - 1;
+                    slider.value = 0;
+                    seekReplayStep(0);
+                } else {
+                    slider.max = 0;
+                    slider.value = 0;
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function seekReplayStep(idx) {
+            if (replayData.length === 0 || idx >= replayData.length) return;
+            replayIndex = parseInt(idx);
+            document.getElementById('replay-slider').value = replayIndex;
+            
+            const step = replayData[replayIndex];
+            document.getElementById('rep-time').textContent = new Date(step.timestamp).toLocaleTimeString();
+            document.getElementById('rep-vitals').textContent = `HR: ${step.hr} bpm | BP: ${step.bp} | Temp: ${step.temp}°C`;
+            document.getElementById('rep-security').innerHTML = `Trust: <span style="color: #3b82f6; font-weight:bold;">${step.trust_score}%</span> | Decision: <span style="font-weight:bold;">${step.validation_status}</span> | Label: <span style="color: ${step.label === 'NORMAL' ? '#10b981' : '#ef4444'}; font-weight:bold;">${step.label}</span>`;
+            document.getElementById('replay-status').textContent = `Replay Step ${replayIndex + 1}/${replayData.length}`;
+        }
+
+        function startForensicReplay() {
+            if (replayData.length === 0) {
+                showAlert('No forensic logs available for replay', 'danger');
+                return;
+            }
+            
+            document.getElementById('replay-play-btn').style.display = 'none';
+            document.getElementById('replay-stop-btn').style.display = 'inline-flex';
+            
+            replayInterval = setInterval(() => {
+                replayIndex = (replayIndex + 1) % replayData.length;
+                seekReplayStep(replayIndex);
+            }, 1500);
+        }
+
+        function stopForensicReplay() {
+            document.getElementById('replay-play-btn').style.display = 'inline-flex';
+            document.getElementById('replay-stop-btn').style.display = 'none';
+            if (replayInterval) {
+                clearInterval(replayInterval);
+                replayInterval = null;
+            }
+        }
+
+        async function submitClinicianOverride() {
+            const idx = document.getElementById('override-idx').value.trim();
+            const decision = document.getElementById('override-decision').value;
+            const notes = document.getElementById('override-notes').value.trim();
+            
+            if (idx === "") {
+                showAlert('Please specify a Block Index', 'warning');
+                return;
+            }
+            
+            const token = localStorage.getItem('token');
+            const role = localStorage.getItem('role');
+            if (!token || (role !== 'Doctor' && role !== 'Admin')) {
+                showAlert('Unauthorized: Please log in as a Doctor or Admin role first on the home dashboard.', 'danger');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/patient/${getPatientId()}/override`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        record_index: parseInt(idx),
+                        original_decision: 'QUARANTINE',
+                        overridden_decision: decision,
+                        notes: notes
+                    })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showAlert('Clinician override recorded successfully', 'success');
+                    document.getElementById('override-idx').value = '';
+                    document.getElementById('override-notes').value = '';
+                    loadPatientData();
+                } else {
+                    showAlert('Override failed: ' + (result.error || 'Check privileges'), 'danger');
+                }
+            } catch (error) {
+                console.error(error);
+                showAlert('Error sending override request', 'danger');
+            }
+        }
+
+        async function exportResearchData() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showAlert('Unauthorized: Please log in first.', 'danger');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/patient/${getPatientId()}/anonymized_research`, {
+                    method: 'GET',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.status === 403) {
+                    showAlert('Forbidden: Insufficient privileges to export research streams.', 'danger');
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.setAttribute("href", dataStr);
+                downloadAnchor.setAttribute("download", `anonymized_research_${getPatientId()}.json`);
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                downloadAnchor.remove();
+                
+                showAlert('Anonymized clinical dataset exported successfully', 'success');
+            } catch (error) {
+                console.error(error);
+                showAlert('Error exporting research data', 'danger');
+            }
+        }
+
+        function updateUIForRole() {
+            const role = localStorage.getItem('role') || 'Guest User';
+            const username = localStorage.getItem('username') || '';
+            const badgeContainer = document.getElementById('role-badge-container');
+            
+            let roleClass = 'role-guest';
+            let roleName = 'Guest';
+            if (role === 'Doctor') { roleClass = 'role-doctor'; roleName = 'Doctor'; }
+            else if (role === 'Nurse') { roleClass = 'role-nurse'; roleName = 'Nurse'; }
+            else if (role === 'Admin') { roleClass = 'role-admin'; roleName = 'Admin'; }
+            else if (role === 'Researcher') { roleClass = 'role-researcher'; roleName = 'Researcher'; }
+            
+            if (badgeContainer) {
+                badgeContainer.innerHTML = `<span class="role-badge ${roleClass}"><i class="fas fa-user-shield"></i> ${roleName} ${username ? `(${username})` : ''}</span>`;
+            }
+            
+            const overrideInputs = [
+                document.getElementById('override-idx'),
+                document.getElementById('override-decision'),
+                document.getElementById('override-notes'),
+                document.querySelector('button[onclick="submitClinicianOverride()"]')
+            ];
+            
+            let overrideWarning = document.getElementById('override-warning-text');
+            if (!overrideWarning) {
+                const container = document.getElementById('override-notes')?.parentElement;
+                if (container) {
+                    overrideWarning = document.createElement('div');
+                    overrideWarning.id = 'override-warning-text';
+                    overrideWarning.style.fontSize = '11px';
+                    overrideWarning.style.marginTop = '6px';
+                    container.appendChild(overrideWarning);
+                }
+            }
+            
+            if (role === 'Doctor' || role === 'Admin') {
+                overrideInputs.forEach(el => { if (el) el.removeAttribute('disabled'); });
+                if (overrideWarning) {
+                    overrideWarning.innerHTML = `<span style="color: #10b981;"><i class="fas fa-unlock"></i> Clinical override access granted.</span>`;
+                }
+            } else {
+                overrideInputs.forEach(el => { if (el) el.setAttribute('disabled', 'true'); });
+                if (overrideWarning) {
+                    overrideWarning.innerHTML = `<span style="color: #ef4444;"><i class="fas fa-lock"></i> Doctor or Admin role required to override.</span>`;
+                }
+            }
+            
+            const exportBtn = document.querySelector('button[onclick="exportResearchData()"]');
+            let exportWarning = document.getElementById('export-warning-text');
+            if (!exportWarning) {
+                const container = exportBtn?.parentElement;
+                if (container) {
+                    exportWarning = document.createElement('div');
+                    exportWarning.id = 'export-warning-text';
+                    exportWarning.style.fontSize = '11px';
+                    exportWarning.style.marginTop = '6px';
+                    exportWarning.style.width = '100%';
+                    container.parentElement.appendChild(exportWarning);
+                }
+            }
+            
+            if (role === 'Doctor' || role === 'Admin' || role === 'Researcher') {
+                if (exportBtn) exportBtn.removeAttribute('disabled');
+                if (exportWarning) {
+                    exportWarning.innerHTML = `<span style="color: #10b981;"><i class="fas fa-unlock"></i> Research export access granted.</span>`;
+                }
+            } else {
+                if (exportBtn) exportBtn.setAttribute('disabled', 'true');
+                if (exportWarning) {
+                    exportWarning.innerHTML = `<span style="color: #ef4444;"><i class="fas fa-lock"></i> Doctor, Admin, or Researcher role required.</span>`;
+                }
+            }
+
+            const tamperBtn = document.getElementById('tamper-btn');
+            let tamperWarning = document.getElementById('tamper-warning-text');
+            if (!tamperWarning) {
+                const container = tamperBtn?.parentElement;
+                if (container) {
+                    tamperWarning = document.createElement('div');
+                    tamperWarning.id = 'tamper-warning-text';
+                    tamperWarning.style.fontSize = '11px';
+                    tamperWarning.style.marginTop = '6px';
+                    tamperWarning.style.width = '100%';
+                    tamperWarning.style.textAlign = 'right';
+                    container.parentElement.appendChild(tamperWarning);
+                }
+            }
+
+            if (role === 'Admin') {
+                if (tamperBtn) tamperBtn.removeAttribute('disabled');
+                if (tamperWarning) {
+                    tamperWarning.innerHTML = `<span style="color: #f59e0b;"><i class="fas fa-exclamation-triangle"></i> Security simulation enabled. Admin only.</span>`;
+                }
+            } else {
+                if (tamperBtn) tamperBtn.setAttribute('disabled', 'true');
+                if (tamperWarning) {
+                    tamperWarning.innerHTML = `<span style="color: #ef4444;"><i class="fas fa-lock"></i> Admin role required to trigger simulation.</span>`;
+                }
+            }
+        }
+
+        // Load data on page load and refresh every 5 seconds
+        updateUIForRole();
+        loadPatientData();
+        setInterval(loadPatientData, 5000);
+    </script>
+</body>
+</html>

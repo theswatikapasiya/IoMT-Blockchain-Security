@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>IoMT Blockchain Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {background:#0f172a;color:white;font-family:sans-serif;}
+.container{padding:20px;}
+h1{text-align:center;color:#00f5d4;}
+
+.cards{display:flex;gap:20px;margin-bottom:20px;}
+.card{flex:1;padding:20px;border-radius:12px;background:#1e293b;text-align:center;}
+
+table{width:100%;background:#1e293b;border-collapse:collapse;}
+th,td{padding:10px;text-align:center;}
+tr:hover{background:#334155;}
+input{width:80px;}
+
+.block{display:inline-block;padding:10px;margin:5px;border:2px solid #00f5d4;}
+
+.red{background:red !important;}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🚀 IoMT Blockchain Dashboard</h1>
+
+<div class="cards">
+<div class="card"><h2 id="count">0</h2>Patients</div>
+<div class="card"><h2 id="avgHR">0</h2>Avg HR</div>
+<div class="card"><h2 id="avgBP">0</h2>Avg BP</div>
+</div>
+
+<table>
+<thead>
+<tr><th>ID</th><th>Name</th><th>HR</th><th>BP</th><th>Temp</th><th>Action</th></tr>
+</thead>
+<tbody id="body"></tbody>
+</table>
+
+<h2>📊 Health Graph</h2>
+<canvas id="chart"></canvas>
+
+<h2>🔗 Blockchain</h2>
+<div id="chain"></div>
+
+</div>
+
+<script>
+
+let prev=[];
+let chart;
+
+async function load(){
+let res=await fetch("http://127.0.0.1:5001/api/patients");
+let data=await res.json();
+
+let patients = data.patients;
+
+render(patients);
+stats(patients);
+graph(patients);
+detect(data);
+blockchain(data);
+
+prev=JSON.parse(JSON.stringify(data));
+}
+
+function render(data){
+let html="";
+data.forEach(p=>{
+html+=`
+<tr onclick="openPatient('${p.id}')">
+<td>${p.id}</td>
+<td>${p.name}</td>
+<td><input value="${p.hr}"></td>
+<td><input value="${p.bp}"></td>
+<td><input value="${p.temp}"></td>
+<td><button onclick="save(event,'${p.id}',this)">Save</button></td>
+</tr>`;
+});
+document.getElementById("body").innerHTML=html;
+}
+
+function save(e,id,btn){
+e.stopPropagation();
+let row=btn.parentElement.parentElement;
+let inputs=row.querySelectorAll("input");
+
+fetch("http://127.0.0.1:5001/update_patient",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+id:id,
+hr:inputs[0].value,
+bp:inputs[1].value,
+temp:inputs[2].value
+})
+});
+}
+
+function openPatient(id){
+window.open(`patient.html?id=${id}`,"_blank");
+}
+
+function stats(data){
+document.getElementById("count").innerText=data.length;
+let hr=0,bp=0;
+data.forEach(p=>{hr+=+p.hr;bp+=+p.bp;});
+document.getElementById("avgHR").innerText=Math.round(hr/data.length);
+document.getElementById("avgBP").innerText=Math.round(bp/data.length);
+}
+
+function graph(data){
+let labels=data.map(p=>p.id);
+let score=data.map(p=>p.hr*0.5+p.bp*0.3+p.temp*0.2);
+
+if(!chart){
+chart=new Chart(document.getElementById("chart"),{
+type:"line",
+data:{labels,datasets:[{data:score,borderColor:"cyan"}]}
+});
+}else{
+chart.data.labels=labels;
+chart.data.datasets[0].data=score;
+chart.update();
+}
+}
+
+function detect(data){
+if(prev.length===0)return;
+
+for(let i=0;i<data.length;i++){
+if(data[i].hr!=prev[i].hr){
+
+document.querySelectorAll("tr")[i+1].classList.add("red");
+
+chart.data.datasets[0].data[i]=0;
+chart.data.datasets[0].borderColor="red";
+chart.update();
+
+new Audio("https://www.soundjay.com/button/beep-07.wav").play();
+
+alert("🚨 DATA TAMPERING DETECTED!");
+
+break;
+}
+}
+}
+
+function hash(s){
+let h=0;
+for(let i=0;i<s.length;i++) h+=s.charCodeAt(i);
+return btoa(h.toString());
+}
+
+function blockchain(
+data){
+let chain=[];
+let prevHash="GENESIS";
+
+data.forEach(p=>{
+let h=hash(p.id+p.hr+p.bp+p.temp+prevHash);
+chain.push({id:p.id,hash:h,prev:prevHash});
+prevHash=h;
+});
+
+renderChain(chain);
+}
+
+function renderChain(chain){
+let html="";
+chain.forEach((b,i)=>{
+let color=(i>0 && b.prev!==chain[i-1].hash)?"red":"#00f5d4";
+
+html+=`<div class="block" style="border-color:${color}">
+${b.id}<br>${b.hash.slice(0,10)}<br>${b.prev.slice(0,10)}
+</div>`;
+});
+document.getElementById("chain").innerHTML=html;
+}
+
+setInterval(load,2000);
+load();
+
+</script>
+
+</body>
+</html>

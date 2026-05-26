@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: iomt-healthcare-config
+  labels:
+    app: iomt-healthcare
+data:
+  MQTT_BROKER: "iomt-mqtt-broker-service"
+  MQTT_PORT: "1883"
+  MQTT_TOPIC: "iot/hospital/patients"
+  FLASK_ENV: "production"
+  SEND_INTERVAL: "10"

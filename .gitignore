@@ -1,0 +1,22 @@
+# Python virtual environments
+.venv/
+.venv-1/
+__pycache__/
+*.pyc
+
+# Local IDE files
+.vscode/
+.idea/
+.DS_Store
+
+# Heavy datasets and local logs
+data/raw/
+data/processed/*.csv
+data/processed/*.pkl
+data/processed/*.json
+!data/processed/device_registry.json
+!data/processed/learned_patterns.json
+
+# Temporary build folders
+hf_deploy_temp/
+../hf_deploy_temp/
